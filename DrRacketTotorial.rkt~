@@ -1,0 +1,45 @@
+#lang lsl
+
+;; Logical Student Language - LSL
+
+;; f1 : Number Number  -> Number
+;; Add two numbers
+
+(define (f1 x y)
+(+ x y))
+
+(check-expect (f1 10 6) 16)
+
+;; my-abs : Number -> NonNegativeNumber
+;; Absolute valye of the given number
+(define (my-abs x)
+  (if (>= x 0)
+      x
+      (* x -1)))
+
+(check-expect (my-abs 10) 10)
+(check-expect (my-abs -2) 2)
+
+;; nonnegative? : Number -> Boolean
+;; Is the given number positive or zero?
+(define (nonnegative? x)
+  (or (zero? x)
+      (positive? x)))
+
+(check-satisfied (my-abs 10) nonnegative?)
+(check-satisfied (my-abs -2) nonnegative?)
+(check-satisfied (my-abs 0) nonnegative?)
+
+;; prime-factor-of : Integer -> Integer 
+;; Returns one of the prime factors of the given number
+
+
+;; How do we know that a given number is a prime facotr of another given number?
+;; given x and y, when is x a  prime factor of y?
+
+;; Property:
+;; when x divides y
+;; and
+;; only has factoes one and itself - is a prime
+
+;; When does prime-factor of compute
