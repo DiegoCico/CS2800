@@ -94,10 +94,9 @@
 
 ;; =
 (define (op_equal X Y)
-  (if (if X Y (not Y))
-      #t
-      #f))
-
+  (if X
+      (if Y #t #f)
+      (if Y #f #t)))
 
 ;; ⊕ (exclusive or)
 (define (op_xor X Y)
