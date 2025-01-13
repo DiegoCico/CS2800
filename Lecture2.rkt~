@@ -1,0 +1,9 @@
+#lang lsl
+
+;; my-abs: Intger - Natural
+
+;; p1 : Boolean Boolean Boolean -> Boolean
+;; : is a contract making sure it intakes the correct contracts
+(: p1 (-> Boolean Boolean Boolean Boolean)
+   define(p1 P Q R)
+   (or P (and Q R)))

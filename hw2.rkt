@@ -106,6 +106,7 @@
       (if Y #t #f)))
 
 
+
 ;; part p3
 
 (check-expect (op_and #t #t) #t)  
@@ -184,7 +185,8 @@
 
 ;; Problem 5
 
-;; Signature: Number Number -> Number
+;; Signature: Real Real -> Real
+(: dist (-> Real Real Real))
 (define (dist x y)
   (sqrt (+ (* x x) (* y y))))
 
@@ -197,8 +199,32 @@
 
 ;; Problem 6
 
+;; Signature: Integer -> Integer
+(: cube-vol (-> Integer Integer))
+(define (cube-vol x)
+  (* x x x))
+
+(check-contract cube-vol)
+(check-expect (cube-vol 1) 1)  
+(check-expect (cube-vol 2) 8)   
+(check-expect (cube-vol 3) 27) 
+
 
 ;; Problem 7
 
+;; Signature: Boolean Boolean -> Boolean
+(: nor (-> Boolean Boolean Boolean))
+(define (nor X Y)
+  (not (or X Y)))
+
+(check-contract nor)
+(check-expect (nor #f #f) #t)
+(check-expect (nor #f #t) #f) 
+(check-expect (nor #t #f) #f)
+(check-expect (nor #t #t) #f)
 
 ;; Problem 8
+
+;; Signature: String NonNegativeNumber -> String
+;;(define (string-hide S ))
+
