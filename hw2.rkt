@@ -225,6 +225,21 @@
 
 ;; Problem 8
 
-;; Signature: String NonNegativeNumber -> String
-;;(define (string-hide S ))
+;; Signature: String Natural -> String
+(: string-hide (-> String Natural String))
+(define (string-hide str pos)
+  (if (and (>= pos 1) (<= pos (string-length str)))
+      (string-append
+       (substring str 0 (- pos 1)) 
+       "_"                        
+       (substring str pos))       
+      str))                        
+
+(check-contract string-hide)
+(check-expect (string-hide "hello" 3) "he_lo")    
+(check-expect (string-hide "world" 1) "_orld")    
+(check-expect (string-hide "racket" 6) "racke_")  
+(check-expect (string-hide "test" 5) "test")    
+(check-expect (string-hide "" 1) "")             
+(check-expect (string-hide "abc" 0) "abc")        
 
