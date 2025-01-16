@@ -1,0 +1,17 @@
+#lang lsl
+
+
+;; Immediate COntractss
+;; imediate check
+;;           generate
+
+(define-contract Even
+(Immediate (check (lambda (x) (and (integer? x) (even? x)))
+            (generate (lambda (fuel)
+                        (*2 random (quotient( -fuel) 2)
+                            (quotient(fuel) 2)))))))
+
+
+(define-contract NonGenEven even?)
+(define-contract Positive positive?)
+
