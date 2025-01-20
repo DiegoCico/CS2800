@@ -1,0 +1,48 @@
+#lang lsl
+
+;; Problem 1
+
+(define (common-divisors a b)
+  (define (divisors n)
+    (filter (lambda (x) (= (remainder n x) 0)) 
+            (build-list n (lambda (i) (+ i 1))))) ; Creates a list from 1 to n
+  (sort (filter (lambda (x) (member x (divisors b))) (divisors a)) <)) ; Sort the list in ascending order
+
+(define (gcd-ref a b)
+  (if (and (= a 0) (= b 0))
+      0
+      (last (common-divisors a b))))
+
+(define (gcd a b)
+  (if (= b 0)
+      a
+      (gcd b (remainder a b))))
+
+(define (gcd-prop a b)
+  (= (gcd a b) (gcd-ref a b)))
+
+;; Problem 2
+
+(define (find-majority-prop ...) ...)
+
+(define (find-majority ...) ...)
+
+;; Problem 3
+
+(define (exclusive-range? ...) ...)
+
+(define (exclusive-range?-prop ...) ...)
+
+;; Problem 4
+
+(define-contract Odd ...)
+
+(define (double-plus1 ...) ...)
+
+;; Problem 5
+
+(define (divisible-by-3-or-5? ...) ...)
+
+(define-contract Divis3or5 ...)
+
+(define (divide-3-or-5 ...) ...)
