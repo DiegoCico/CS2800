@@ -2,12 +2,11 @@
 
 ;; Problem 1
 
-;; NEED TO DO 
+(define (gcd-prop ...) ...)
 
+(define (gcd ...) ...)
 
 ;; Problem 2
-
-;; NEED TO DO 
 
 (define (find-majority-prop ...) ...)
 
@@ -15,6 +14,7 @@
 
 ;; Problem 3
 
+;; Signature: Natural Natural Natural
 (: exclusive-range? (-> Natural Natural Natural Boolean))
 (define (exclusive-range? lo hi n)
   (and (> n lo) (< n hi)))
@@ -38,23 +38,18 @@
 
 ;; Problem 4
 
-;; Confused here? 
-
 (define-contract Odd
-  (lambda (x) 
-    (and (integer? x) (odd? x))))
+  (Immediate (check (lambda (x) (and (integer? x) (odd? x))))
+             (generate (lambda (fuel) (+ (* 2 (random (add1 fuel))) 1)))
+             (shrink (lambda (fuel x)
+                       (let ([y (/ x 2)])
+                         (if (even? y) y (sub1 y)))))))
 
-(: double-plus1 (-> Integer Integer))
-(define (double-plus1 x)
-  (+ (* 2 x) 1))
+(: double-plus1 (-> Integer))
+(define (double-plus1)
+  (+ (* 2 (contract-generate Odd)) 1))
 
 (check-contract double-plus1)
-(check-expect (double-plus1 1) 3)  
-(check-expect (double-plus1 3) 7) 
-(check-expect (double-plus1 5) 11) 
-(check-expect (double-plus1 -1) -1) 
-(check-expect (double-plus1 -3) -5)
-
 
 ;; Problem 5
 
