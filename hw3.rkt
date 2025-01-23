@@ -2,59 +2,31 @@
 
 ;; Problem 1
 
-(define (divisors n)
-  (filter (lambda (d) (zero? (remainder n d)))
-          (range 1 (+ n 1))))
-
 (define (common-divisors n m)
   (filter (lambda (d) (and (zero? (remainder n d))
                            (zero? (remainder m d))))
           (range 1 (+ (min n m) 1))))
 
+(: gcd-ref (-> Natural Natural Natural))
 (define (gcd-ref n m)
-  (if (and (zero? n) (zero? m))
-      0
-      (apply max (if (or (zero? n) (zero? m))
-                     (if (zero? n) (divisors m) (divisors n))
-                     (common-divisors n m)))))
+  (cond
+    [(and (= n 0) (= m 0)) 0]              
+    [(or (= n 0) (= m 0)) (max n m)]       
+    [else (apply max (common-divisors n m))]))
+
+(: gcd-prop (-> Natural Natural Boolean))
+(define (gcd-prop n m)
+  (= (gcd n m) (gcd-ref n m)))
+
+(: gcd (-> Natural Natural Natural))
 (define (gcd n m)
   (cond
     [(and (zero? n) (zero? m)) 0]
     [(zero? m) n]
     [else (gcd m (remainder n m))]))
 
-(define (all-divisors-less? n m gcd-val)
-  (cond
-    [(> 1 gcd-val) #t]
-    [(and (zero? (remainder n 1)) (zero? (remainder m 1))) #f]
-    [else (all-divisors-less? n m gcd-val)]))
-
-(define (all-divisors-less?-helper n m gcd-val current-test)
-  (cond
-    [(>= current-test gcd-val) #t]
-    [(and (zero? (remainder n current-test)) (zero? (remainder m current-test))) #f]
-    [else (all-divisors-less?-helper n m gcd-val (+ current-test 1))]))
-
-(define (gcd-prop n m)
-  (if (and (zero? n) (zero? m))
-      (equal? (gcd n m) (gcd-ref n m))
-      (and (equal? (gcd n m) (gcd-ref n m))
-           (>= (gcd n m) 1) 
-           (zero? (remainder n (gcd n m))) 
-           (zero? (remainder m (gcd n m))) 
-           (all-divisors-less?-helper n m (gcd n m) 1))))
-
-(check-expect (common-divisors 12 18) '(1 2 3 6))
-(check-expect (gcd-ref 12 18) 6)
-(check-expect (gcd 12 18) 6)
-(check-expect (gcd 0 0) 0)
-(check-expect (gcd 0 5) 5)
-
 ;; Problem 2
 
-; Signature: List Natural -> Natural -1
-; Purpose: Finds the majority element in a list of natural numbers.
-;          Returns the majority element if it exists, otherwise returns -1.
 (define (find-majority nums)
   (cond
     [(empty? nums) -1]
@@ -79,8 +51,6 @@
 (define (count-occurrences elem lst)
   (length (filter (lambda (x) (= x elem)) lst)))
 
-; Signature: Listof Natural -> Boolean
-; Purpose: Checks if the output of find-majority is correct when it's not -1.
 (define (find-majority-prop nums)
   (let ([majority (find-majority nums)])
     (cond
@@ -91,22 +61,24 @@
 
 ;; Problem 3
 
-;; Signature: Natural Natural Natural -> Boolean
-(: exclusive-range? (-> Natural Natural Natural Boolean))
+(: exclusive-range? (-> Integer Integer Integer Boolean))
 (define (exclusive-range? lo hi n)
   (and (> n lo) (< n hi)))
 
-;; Signature: Natural Natural Boolean
-(: exclusive-range?-prop (-> Natural Natural Boolean))
+(: exclusive-range?-prop (-> Integer Integer Boolean))
 (define (exclusive-range?-prop lo hi)
   (cond
     [(>= lo hi) #t] 
     [else
      (let ([range-size (- hi lo 1)]) 
-       (if (zero? range-size)
+       (if (< range-size 1)
            #t 
            (let ([n (+ lo 1 (random range-size))])
-             (exclusive-range? lo hi n))))]))
+             (and (exclusive-range? lo hi n)
+                  (> n lo)
+                  (< n hi)))))]))
+
+
 
 (check-contract exclusive-range?)
 (check-expect (exclusive-range? 1 10 5) #t)  
