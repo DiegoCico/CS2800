@@ -27,26 +27,23 @@
 
 ;; Problem 2
 
-(define (find-majority nums)
+(define (find-candidate nums candidate count)
   (cond
-    [(empty? nums) -1]
+    [(null? nums) candidate]
+    [(zero? count) (find-candidate (rest nums) (first nums) 1)]
+    [(= (first nums) candidate)
+     (find-candidate (rest nums) candidate (+ count 1))]
     [else
-      ((lambda (remaining candidate count)
-         (cond
-           [(empty? remaining)
-            (if (> (count-occurrences candidate nums) (/ (length nums) 2))
-                candidate
-                -1)]
-           [(equal? (first remaining) candidate)
-             (find-majority (rest remaining) candidate (+ count 1))]
-           [else
-             (if (zero? count)
-                 (find-majority (rest remaining) (first remaining) 1)
-                 (find-majority (rest remaining) candidate (- count 1)))]))
-       nums (first nums) 1)]))
+     (find-candidate (rest nums) candidate (- count 1))]))
 
-(define (count-occurrences elem lst)
-  (length (filter (lambda (x) (= x elem)) lst)))
+(define (verify-majority nums candidate)
+  (let ([count (length (filter (lambda (x) (= x candidate)) nums))])
+    (if (> count (/ (length nums) 2))
+        candidate
+        -1)))
+
+(define (find-majority nums)
+  (verify-majority nums (find-candidate nums #f 0)))
 
 (define (find-majority-prop nums)
   (let ([majority (find-majority nums)])
@@ -54,7 +51,10 @@
       [(equal? majority -1) #t] 
       [else
        (and (>= majority 0)
-            (> (count-occurrences majority nums) (/ (length nums) 2)))]))) 
+            (> (count-occurrences majority nums) (/ (length nums) 2)))])))
+
+(define (count-occurrences elem lst)
+  (length (filter (lambda (x) (= x elem)) lst)))
 
 ;; Problem 3
 
