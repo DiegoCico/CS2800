@@ -31,22 +31,19 @@
   (cond
     [(empty? nums) -1]
     [else
-     ((lambda (remaining candidate count)
-        (cond
-          [(empty? remaining)
-           (if (> (count-occurrences candidate nums) (/ (length nums) 2))
-               candidate
-               -1)]
-          [(equal? (first remaining) candidate)
-           ((lambda (r c n) (r c n))
-            (rest remaining) candidate (+ count 1))]
-          [else
-           ((lambda (r c n)
-              (if (zero? count)
-                  (r (rest remaining) (first remaining) 1)
-                  (r (rest remaining) candidate (- count 1))))
-            (lambda (r c n) (r c n)))]))
-      nums (first nums) 1)]))
+      ((lambda (remaining candidate count)
+         (cond
+           [(empty? remaining)
+            (if (> (count-occurrences candidate nums) (/ (length nums) 2))
+                candidate
+                -1)]
+           [(equal? (first remaining) candidate)
+             (find-majority (rest remaining) candidate (+ count 1))]
+           [else
+             (if (zero? count)
+                 (find-majority (rest remaining) (first remaining) 1)
+                 (find-majority (rest remaining) candidate (- count 1)))]))
+       nums (first nums) 1)]))
 
 (define (count-occurrences elem lst)
   (length (filter (lambda (x) (= x elem)) lst)))
@@ -65,7 +62,7 @@
 (define (exclusive-range? lo hi n)
   (and (> n lo) (< n hi)))
 
-(: exclusive-range?-prop (-> Integer Integer Boolean))
+(: exclusive-range?-prop (-> Integer Integer True))
 (define (exclusive-range?-prop lo hi)
   (cond
     [(>= lo hi) #t] 
