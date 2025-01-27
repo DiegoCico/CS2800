@@ -2,7 +2,7 @@
 
 ;; Problem 1
 
-;;(: duplicate-element-prop (-> Integer Integer Boolean))
+;;(: duplicate-element-prop (-> Integer Integer))
 (define (duplicate-element-prop lst result)
   (cond
     [(= result -1) #t]
@@ -28,15 +28,21 @@
 
 ;; Problem 3
 
-(: pair-with-sum-prop (-> Integer Integer Boolean))
-(define (pair-with-sum-prop lst target)
+;; (: pair-with-sum-prop (-> Integer Integer Boolean))
+(define (pair-with-sum-prop result target)
   (cond
-    [(empty? lst) #t]
-    [(= (+ (first lst) (second lst)) target) #t]
+    [(empty? result) #t]
+    [(and (= (length result) 2)
+          (= (+ (first result) (second result)) target)) #t]
     [else #f]))
 
 (define (pair-with-sum lst target)
-  (lambda (x)
-    (lambda (y)
-      (if (= (+ x y) target) (list (list x) (list y))) lst) lst)
-  '()
+  (cond
+    ((null? lst) '())
+    (else 
+      (append (map (lambda (y) 
+                     (if (= (+ (first lst) y) target)
+                         (list (list (first lst)) (list y))
+                         '()))
+                   (rest lst))
+              (pair-with-sum (rest lst) target)))))

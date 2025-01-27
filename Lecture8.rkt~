@@ -1,0 +1,13 @@
+#lang lsl
+
+
+(define-contract (SameLength l1) (lambda (l2)  (= (length l1) (length l2))))
+;; my-rev : (X) [List X] -> [List X]
+(: my-rev (Function (arguments [xs (List Any)])
+                               (result (AllOf (List Any) (SameLength xs)))))
+(define (my-rev xs)
+  (reverse xs))
+
+(my-rev (append (list 1 2 3) (list 4 5 6)))
+=
+(append (list 6 5 4) list( 3 2 1))
