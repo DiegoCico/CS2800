@@ -41,27 +41,23 @@
 
 (define (common-element-prop ...) ...)
 
-(: common-element (-> (List (List Natural)) Integer))
-(define (common-element lst)
-  )
+(define (common-element ...) ...)
 
 ;; Problem 3
 
-;; (: pair-with-sum-prop (-> Integer Integer Boolean))
-(define (pair-with-sum-prop result target)
-  (cond
-    [(empty? result) #t]
-    [(and (= (length result) 2)
-          (= (+ (first result) (second result)) target)) #t]
-    [else #f]))
+(: pair-witg-sum-prop (-> (List Integer) Integer True))
+(define (pair-with-sum-prop ls num)
+  (let ([result (pair-with-sum ls num)])
+    (cond
+      [(empty? result) #t]  
+      [else (= (+ (first result) (second result)) num)]))) 
 
-(define (pair-with-sum lst target)
-  (cond
-    ((empty lst) '())
-    (else 
-      (append (map (lambda (y) 
-                     (if (= (+ (first lst) y) target)
-                         (list (list (first lst)) (list y))
-                         '()))
-                   (rest lst))
-              (pair-with-sum (rest lst) target)))))
+(: pair-with-sum (-> (List Integer) Integer (List Integer)))
+(define (pair-with-sum ls num)
+  (if (or (empty? ls) (equal? (length ls) 1))
+      '() 
+      (let ((first-element (first ls)))
+        (let ((other-element (- num first-element)))
+          (if (member other-element (rest ls))
+              (list first-element other-element) 
+              (pair-with-sum (rest ls) num))))))
