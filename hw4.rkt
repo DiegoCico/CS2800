@@ -45,12 +45,13 @@
 
 ;; Problem 3
 
-(: pair-witg-sum-prop (-> (List Integer) Integer True))
+(: pair-with-sum-prop (-> (List Integer) Integer Boolean))
 (define (pair-with-sum-prop ls num)
   (let ([result (pair-with-sum ls num)])
     (cond
-      [(empty? result) #t]  
-      [else (= (+ (first result) (second result)) num)]))) 
+      [(empty? result) #t]
+      [(= (length result) 2) (equal? (+ (first result) (second result)) num)]  
+      [else #f]))) 
 
 (: pair-with-sum (-> (List Integer) Integer (List Integer)))
 (define (pair-with-sum ls num)
@@ -58,6 +59,30 @@
       '() 
       (let ((first-element (first ls)))
         (let ((other-element (- num first-element)))
-          (if (member other-element (rest ls))
+          (if (member? other-element (rest ls))
               (list first-element other-element) 
               (pair-with-sum (rest ls) num))))))
+
+
+(check-contract pair-with-sum 100)
+(check-contract pair-with-sum-prop 100)
+(check-expect (pair-with-sum '(1 0) 1) '(1 0))
+(check-expect (pair-with-sum '(2 7 11 15) 9) '(2 7))
+(check-expect (pair-with-sum '(1 2 3 4 5) 10) '())
+(check-expect (pair-with-sum '(3 3) 6) '(3 3))
+(check-expect (pair-with-sum '(1) 1) '())
+(check-expect (pair-with-sum '() 5) '())
+(check-expect (pair-with-sum '(4 6 8 2) 14) '(6 8))
+(check-expect (pair-with-sum '(5 10 15 20) 25) '(5 20))
+(check-expect (pair-with-sum '(7 1 5 9) 10) '(1 9))
+(check-expect (pair-with-sum '(1 2 3 4 5 6 7 8 9 10) 17) '(7 10))
+(check-expect (pair-with-sum '(100 200 300) 500) '(200 300))
+(check-expect (pair-with-sum '(3 2 1 0 -1 -2 -3) -5) '(-2 -3))
+(check-expect (pair-with-sum '(1 1 1 1 1 2 2 2) 3) '(1 2))
+
+(check-expect (pair-with-sum-prop '(1 0) 1) #t)
+(check-expect (pair-with-sum-prop '(2 7 11 15) 9) #t)
+(check-expect (pair-with-sum-prop '(1 2 3 4 5) 10) #t)
+(check-expect (pair-with-sum-prop '(3 3) 6) #t)
+(check-expect (pair-with-sum-prop '(1) 1) #t)
+(check-expect (pair-with-sum-prop '() 5) #t)
