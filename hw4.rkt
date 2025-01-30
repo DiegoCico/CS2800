@@ -39,19 +39,33 @@
 
 ;; Problem 2
 
-(define (common-element-prop ...) ...)
+(: common-element-prop (-> (List (List Integer)) True))
+(define (common-element-prop lss)
+  (if (equal? (common-element lss) -1) #t
+      (andmap (lambda (x) (member? (common-element lss) x)) lss)))
 
-(define (common-element ...) ...)
+(: common-element-two-lists (-> (List Integer) (List Integer) (List Integer)))
+(define (common-elements-two-lists ls1 ls2)
+  (filter (lambda (x) (member? x ls2)) ls1))
+
+
+(: common-element (-> (List (List Integer)) Integer))
+(define (common-element lss)
+  (if (or (empty? lss) (empty? (first lss))) -1
+      (if (= (length lss) 1)
+          (first (first lss))
+          (common-element(cons (common-elements-two-lists (first lss) (second lss)) (rest (rest lss)))))))
+
 
 ;; Problem 3
 
-(: pair-with-sum-prop (-> (List Integer) Integer Boolean))
+(: pair-with-sum-prop (-> (List Integer) Integer True))
 (define (pair-with-sum-prop ls num)
   (let ([result (pair-with-sum ls num)])
     (cond
       [(empty? result) #t]
-      [(= (length result) 2) (equal? (+ (first result) (second result)) num)]  
-      [else #f]))) 
+      [(= (length result) 2) (and (equal? (+ (first result) (second result)) num) (and (member? (first result) ls) (member? (second result) ls)))]  
+      [else #f])))
 
 (: pair-with-sum (-> (List Integer) Integer (List Integer)))
 (define (pair-with-sum ls num)
@@ -62,6 +76,7 @@
           (if (member? other-element (rest ls))
               (list first-element other-element) 
               (pair-with-sum (rest ls) num))))))
+
 
 
 (check-contract pair-with-sum 100)
