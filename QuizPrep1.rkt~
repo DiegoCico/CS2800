@@ -1,0 +1,200 @@
+#lang racket
+;; =============================================================================
+;; Comprehensive Racket Examples: From Easy to Hard
+;;
+;; This script demonstrates:
+;; 1. Immediate Evaluation
+;; 2. Basic Functions and Arithmetic
+;; 3. Recursive Functions (including factorial, Fibonacci, tail recursion,
+;;    list reversal, mutual recursion, and flattening nested lists)
+;; 4. Testing with rackunit's check functions
+;; 5. Generators (from simple fixed-value generators to more advanced examples)
+;; 6. Advanced Higher-Order Functions and Closures
+;;
+;; Each section is annotated to explain how it works.
+;; =============================================================================
+
+;; =============================================================================
+;; 1. Immediate Evaluation
+;; =============================================================================
+(displayln "=== Immediate Evaluation ===")
+;; Racket evaluates expressions as soon as they are encountered.
+(define immediate-result (+ 2 3))
+(displayln (format "Immediate evaluation of 2 + 3 = ~a" immediate-result))
+;; Lambda expressions are also evaluated immediately if applied:
+(displayln "Immediate evaluation of lambda expression: ((lambda (x) (* x x)) 3)")
+(displayln ((lambda (x) (* x x)) 3))  ; Expected output: 9
+
+;; =============================================================================
+;; 2. Basic Functions and Arithmetic
+;; =============================================================================
+(displayln "\n=== Basic Functions ===")
+;; Define a simple function to square a number.
+(define (square x)
+  "Returns the square of x."
+  (* x x))
+(displayln (format "Square of 5: ~a" (square 5)))  ; Expected output: 25
+
+;; =============================================================================
+;; 3. Recursive Functions
+;; =============================================================================
+(displayln "\n=== Recursive Functions ===")
+
+;; 3a. Factorial (Simple Recursion)
+(define (factorial n)
+  "Computes n! recursively. Base case: factorial of 0 is 1."
+  (if (<= n 0)
+      1
+      (* n (factorial (- n 1)))))
+(displayln (format "Factorial of 5: ~a" (factorial 5)))  ; Expected output: 120
+
+;; 3b. Fibonacci (Naive Recursion)
+(define (fib n)
+  "Computes the nth Fibonacci number using naive recursion."
+  (cond
+    [(= n 0) 0]
+    [(= n 1) 1]
+    [else (+ (fib (- n 1)) (fib (- n 2)))]))
+(displayln (format "7th Fibonacci number: ~a" (fib 7)))  ; Expected output: 13
+
+;; 3c. Tail Recursive Sum (Sum from 1 to n)
+(define (tail-sum n)
+  "Sums numbers from 1 to n using tail recursion."
+  (define (iter k acc)
+    (if (<= k 0)
+        acc
+        (iter (- k 1) (+ k acc))))
+  (iter n 0))
+(displayln (format "Tail-recursive sum of numbers 1 to 5: ~a" (tail-sum 5)))  ; Expected output: 15
+
+;; 3d. Reverse a List Recursively
+(define (reverse-list lst)
+  "Recursively reverses a list."
+  (if (null? lst)
+      '()
+      (append (reverse-list (cdr lst)) (list (car lst)))))
+(displayln (format "Reverse of list (1 2 3 4 5): ~a" (reverse-list '(1 2 3 4 5))))  
+;; Expected output: (5 4 3 2 1)
+
+;; 3e. Mutually Recursive Functions: even? and odd?
+(define (even? n)
+  "Determines if n is even using mutual recursion."
+  (if (zero? n)
+      #t
+      (odd? (- n 1))))
+(define (odd? n)
+  "Determines if n is odd using mutual recursion."
+  (if (zero? n)
+      #f
+      (even? (- n 1))))
+(displayln (format "Is 4 even? ~a" (even? 4)))  ; Expected: #t
+(displayln (format "Is 7 odd? ~a" (odd? 7)))    ; Expected: #t
+
+;; 3f. Advanced Recursive Function: Flatten a Nested List
+(define (flatten lst)
+  "Recursively flattens a nested list."
+  (cond
+    [(null? lst) '()]
+    [(list? (car lst))
+     (append (flatten (car lst)) (flatten (cdr lst)))]
+    [else
+     (cons (car lst) (flatten (cdr lst)))]))
+(displayln (format "Flatten nested list '(1 (2 (3 4) 5) (6)): ~a" (flatten '(1 (2 (3 4) 5) (6)))))
+;; Expected output: (1 2 3 4 5 6)
+
+;; =============================================================================
+;; 4. Testing with rackunit
+;; =============================================================================
+(require rackunit)
+(displayln "\n=== Testing with rackunit ===")
+;; Use rackunit's check functions to verify that our functions behave as expected.
+(check-equal? (square 4) 16 "Square function test: 4^2 should be 16")
+(check-equal? (factorial 0) 1 "Factorial test: 0! should be 1")
+(check-equal? (factorial 5) 120 "Factorial test: 5! should be 120")
+(check-equal? (fib 6) 8 "Fibonacci test: fib(6) should be 8")
+(check-equal? (tail-sum 5) 15 "Tail-sum test: sum from 1 to 5 should be 15")
+(check-equal? (reverse-list '(1 2 3)) '(3 2 1) "Reverse list test")
+(check-true (even? 4) "Mutual recursion test: 4 is even")
+(check-true (odd? 7) "Mutual recursion test: 7 is odd")
+(check-equal? (flatten '(1 (2 (3 4) 5) (6))) '(1 2 3 4 5 6) "Flatten function test")
+
+(displayln "All tests passed (if no errors were reported).")
+
+;; =============================================================================
+;; 5. Generators: Producing Values on Demand
+;; =============================================================================
+(require racket/generator)
+(displayln "\n=== Generators ===")
+
+;; 5a. Simple Generator: Yields Three Fixed Values
+(define simple-gen
+  (generator ()
+    (yield "first")
+    (yield "second")
+    (yield "third")))
+(displayln "Simple Generator Values:")
+(displayln (generator-next simple-gen))  ; "first"
+(displayln (generator-next simple-gen))  ; "second"
+(displayln (generator-next simple-gen))  ; "third"
+(with-handlers ([exn:fail?
+                 (lambda (ex) (displayln "Simple generator exhausted."))])
+  (generator-next simple-gen))
+
+;; 5b. Even Numbers Generator: Yields Even Numbers Up to a Limit
+(define (even-numbers-generator limit)
+  "Returns a generator that yields even numbers from 0 to limit (inclusive)."
+  (generator ()
+    (for ([i (in-range 0 (+ limit 1) 2)])
+      (yield i))))
+(define even-gen (even-numbers-generator 10))
+(displayln "Even Numbers Generator up to 10:")
+(let loop ()
+  (with-handlers ([exn:fail?
+                   (lambda (ex) (displayln "Even numbers generator exhausted."))])
+    (displayln (generator-next even-gen))
+    (loop)))
+
+;; 5c. Fibonacci Generator: Yields Fibonacci Numbers Indefinitely
+(define fib-gen
+  (generator ()
+    (define a 0)
+    (define b 1)
+    (yield a)
+    (yield b)
+    (let loop ()
+      (define next (+ a b))
+      (yield next)
+      (set! a b)
+      (set! b next)
+      (loop))))
+(displayln "Fibonacci Generator: First 10 Values")
+(for ([i (in-range 10)])
+  (displayln (generator-next fib-gen)))
+
+;; =============================================================================
+;; 6. Advanced Higher-Order Functions and Closures
+;; =============================================================================
+(displayln "\n=== Advanced Functions and Closures ===")
+
+;; 6a. Function Composition: Composing Two Functions
+(define (compose f g)
+  "Returns a new function that applies g to its input and then f to the result."
+  (lambda (x) (f (g x))))
+;; Example: Compose square and add1 so that (compose square add1) applied to 4 yields:
+;; square(add1(4)) = square(5) = 25.
+(define add1 (lambda (x) (+ x 1)))
+;; (square is already defined above; if needed, it could be redefined as a lambda.)
+(define square-after-add1 (compose square add1))
+(displayln (format "Compose function: square-after-add1 applied to 4 gives ~a" (square-after-add1 4))) ; Expected: 25
+
+;; 6b. Closures: Function Factory that Creates Adders
+(define (make-adder n)
+  "Returns a function that adds n to its argument."
+  (lambda (x) (+ n x)))
+(define add5 (make-adder 5))
+(displayln (format "Closure example: add5 of 10 gives ~a" (add5 10)))  ; Expected: 15
+
+;; =============================================================================
+;; End of Script
+;; =============================================================================
+(displayln "\n=== End of Comprehensive Racket Examples ===")
