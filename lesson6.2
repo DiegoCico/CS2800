@@ -1,0 +1,139 @@
+#lang lsl
+
+;; 2025-01-16
+
+;; Atomic: Number, Boolean, Integer, Real, String, Natural
+
+;; Functions: (-> [Argument1] [Argument2] ... [Result])
+
+;; (define-contract [Name] [ContractSpec])
+
+(define-contract Points Natural)
+
+;; Immediate contracts
+;; (Immediate (check ...)
+;;            (generate ...))
+(define-contract Even
+  (Immediate
+   (check (lambda (x) (and (integer? x) (even?))))
+   (generate (lambda (fuel)
+               (* 2 (random (quotient (- fuel) 2)
+                            (quotient fuel 2)))))))
+
+(define-contract NonGenEven even?)
+(define-contract Positive positive?)
+(define-contract UpTo100 (lambda (x) (member? x (range 0 101))))
+;;(contract-generate NonGenEven)
+
+
+;; (list 1 "ferd" #t)
+
+;; List<Integer>
+;; List Integer
+(define-contract HomeworkPoints (List Points))
+
+(: only-non-negatives (-> (List Integer) (List Natural)))
+;; Return only the non-negative integers
+(define (only-non-negatives xs)
+  (filter (lambda (x) (or (zero? x) (positive? x))) xs))
+(check-contract only-non-negatives)
+
+;; Tuples: fixed-sized lists with values of given types
+(define-contract TwoIntsAndNat (Tuple Integer Integer Natural))
+
+;; kv-swap : [Tuple Natural String] -> [Tuple String Natural]
+(: kv-swap (-> (Tuple Natural String) (Tuple String Natural)))
+(define (kv-swap kv)
+  (list (second kv) (first kv)))
+(check-contract kv-swap)
+
+
+
+
+;; Function Design Recipe
+;; 1. Signature
+;; 2. Purpose
+;; 3. Examples / Tests
+;; 4. Code / Implementation
+
+;; Design + Specification Recipe
+;; 1. Signature (as a contract)
+;; 2. Purpose
+;; 3. Specification / Tests
+;; 4. Code / Implementation
+;; 5. Verification
+
+;; Case Study: Conversion of Colors to B&W
+;; We want to be able to convert colors into
+;; B&W values, luminance, so that a given set
+;; of colors is still distinguishable.
+
+;; A Color is one of:
+;; - "red"
+;; - "blue"
+;; - "green"
+;; - "yellow"
+;; - "purple"
+(define COLOR-RED "red")
+(define COLOR-BLUE "blue")
+(define COLOR-GREEN "green")
+(define COLOR-YELLOW "yellow")
+(define COLOR-PURPLE "purple")
+(define ALL-COLORS
+  (list COLOR-RED
+        COLOR-BLUE
+        COLOR-GREEN
+        COLOR-YELLOW
+        COLOR-PURPLE))
+
+(define-contract Color
+  (Immediate (check (lambda (c) (member? c ALL-COLORS)))
+             (generate (lambda (_)
+                         (list-ref ALL-COLORS
+                                   (random 0
+                                           (length ALL-COLORS)))))))
+
+
+;; color->b&w : Color -> Number[0, 255]
+;; Convert a color to its luminance (b&w value), such that
+;; it is distinguishable from other colors
+
+
+;; Spec: For any color c, its luminance should be at leas a
+;; given threshold (20) away from all other colors' luminances.
+
+(: color->b&w-prop (-> Color True))
+(define MIN-DELTA 20)
+(define (color->b&w-prop c)
+  ;; for any other c1,
+  ;; (abs (color->&b&w c) - (color->b&w c1)) > MIN-DELTA
+  (let [(other-colors (filter (lambda (c1) (not (string=? c c1)))
+                              ALL-COLORS))
+        (c-lum (color->b&w c))]
+    (andmap
+     (lambda (c1) (> (abs (- c-lum (color->b&w c1))) MIN-DELTA))
+     other-colors)))
+
+
+
+(define-struct rgb [R G B])
+;; An RGB is a
+;; (make-struct Number[0, 255] Number[0, 255] Number[0, 255])
+;; where each element represent the red, green, or blue component
+;; of the color, respectively.
+
+;; color->rgb : Color -> RGB
+(define (color->rgb c)
+  (cond [(string=? c COLOR-RED) (make-rgb 255 0 0)]
+        [(string=? c COLOR-BLUE) (make-rgb 0 0 255)]
+        [(string=? c COLOR-GREEN) (make-rgb 0 255 0)]
+        [(string=? c COLOR-YELLOW) (make-rgb 255 255 0)]
+        [(string=? c COLOR-PURPLE) (make-rgb 255 0 255)]))
+
+
+(define (color->b&w c)
+  (let [(rgb (color->rgb c))]
+    (+ (0.299 (rgb-R rgb))
+       (0.587 (rgb-G rgb))
+       (0.114 (rgb-B rgb)))))
+    
