@@ -2,7 +2,7 @@
 
 ;; Problem 1
 
-;; part p1a
+;; Part p1a
 (define-struct push [num])
 (define-struct add [])
 (define-struct mul [])
@@ -15,174 +15,124 @@
 
 (: simple-eval (-> (List Integer) (List SimpleInstr) (List Integer)))
 (define (simple-eval stk instrs)
-  (local [(: stack-binop (-> [-> Integer Integer Integer] [List Integer] [List SimpleInstr] [List Integer]))
+  (local [
+          (: stack-binop (-> [-> Integer Integer Integer] [List Integer] [List SimpleInstr] [List Integer]))
           (define (stack-binop op stk instrs)
             (if (>= (length stk) 2)
-                (simple-eval (cons (op (first stk) (second stk)) (rest (rest stk))) instrs)
-                (list)))
+                (simple-eval (cons (op (first stk) (second stk))
+                                   (rest (rest stk)))
+                             instrs)
+                (list)))  
+          
           (: eval-instr (-> SimpleInstr [List Integer] [List SimpleInstr] [List Integer]))
-          (define (eval-instr i stk instrs)
-            (cond
-              [(add? i) (stack-binop + stk instrs)]
-              [(mul? i) (stack-binop * stk instrs)]
-              [(sub? i) (stack-binop - stk instrs)]
-              [(push? i) (simple-eval (cons (push-num i) stk) instrs)]))]
-    (cond
-      [(empty? instrs) stk]
-      [(cons? instrs) (eval-instr (first instrs) stk (rest instrs))])))
-
-(: simple-stack-verify (-> (List SimpleInstr) (List SimpleInstr) Boolean))
-(define (simple-stack-verify p1 p2)
-  (define (min-req instrs)
-    (define (helper instrs current req)
-      (cond
-        [(empty? instrs) req]
-        [else
-         (let ([i (first instrs)])
-           (cond
-             [(push? i) (helper (rest instrs) (+ current 1) req)]
-             [(or (add? i) (mul? i) (sub? i))
-              (helper (rest instrs) (- current 1) (max req (max 0 (- 2 current))))]
-             [else (error "Unknown instruction in min-req" i)]))]))
-    (helper instrs 0 0))
-  (define (all-lists n test-ints)
-    (if (zero? n)
-        (list '())
-        (apply append (map (lambda (x) (map (lambda (rest) (cons x rest)) (all-lists (sub1 n) test-ints))) test-ints))))
-  (define req1 (min-req p1))
-  (define req2 (min-req p2))
-  (define req (max req1 req2))
-  (define max-extra 3)
-  (for/and ([extra (in-range 0 (add1 max-extra))]
-            [stack (in-list (all-lists (+ req extra) '(-2 -1 0 1 2)))])
-    (equal? (simple-eval stack p1) (simple-eval stack p2))))
-
-
-;; Problem 2
-
-;; part p2
-(: simple-const-fold (-> (List SimpleInstr) (List SimpleInstr)))
-(define (simple-const-fold p)
-  ...)
-
-;; part p2
-
-;; Problem 3
-
-;; part p3
-(: simple-const-fold-prop (-> (List SimpleInstr) True))
-(define (simple-const-fold-prop ...) ...)
-
-(check-contract simple-const-fold-prop)
-
-;; part p3
-
-;; Problem 4
-
-;; part p4a
-(define-struct var [name])
-(define-contract (Var X) (Struct var [X]))
-(define-contract Instr (OneOf (Push Integer) Add Mul Sub (Var String)))
-
-(define-struct bind [name value])
-(define-contract (Bind X Y) (Struct bind [X Y]))
-(define-contract Binding (Bind String Integer))
-
-
-(: eval (-> (List Binding) (List Integer) (List Instr) (List Integer)))
-; will return an empty list if it reaches an unbound variable, or a malformed
-; program (trying to do an operation without enough values on stack).
-(define (eval env stk instrs)
-  (local [(: stack-binop (-> [-> Integer Integer Integer] [List Integer]
-                             [List Instr]
-                             [List Integer]))
-          ; evaluates a binary operator on top two numbers of stack, if present
-          (define (stack-binop op stk instrs)
-            (if (>= (length stk) 2)
-                (eval env
-                      (cons (op (first stk) (second stk))
-                            (rest (rest stk)))
-                      instrs)
-                (list)))
-
-          (: lookup-var (-> String [List Binding] [List Integer]
-                            [List Instr] [List Integer]))
-          (define (lookup-var name env stk instrs)
-            (cond [(empty? env) (list)]
-                  [(cons? env) (if (equal? name (bind-name (first env)))
-                                   (eval env
-                                         (cons (bind-value (first env))
-                                               stk)
-                                         instrs)
-                                   (lookup-var name (rest env) stk instrs))]))
-
-          (: eval-instr (-> Instr [List Integer] [List Instr] [List Integer]))
-          ; evaluates a single instruction, given a stack and rest of instructions
           (define (eval-instr i stk instrs)
             (cond [(add? i) (stack-binop + stk instrs)]
                   [(mul? i) (stack-binop * stk instrs)]
                   [(sub? i) (stack-binop - stk instrs)]
-                  [(push? i) (eval env (cons (push-num i) stk) instrs)]
-                  [(var? i) (lookup-var (var-name i) env stk instrs)]))]
-    (cond [(empty? instrs) stk]
+                  [(push? i) (simple-eval (cons (push-num i) stk) instrs)]))]
+    (cond [(empty? instrs) stk]         
           [(cons? instrs) (eval-instr (first instrs) stk (rest instrs))])))
-;; part p4a
 
-;; Your first task is to first define an updated version of `simple-stack-verify`.
-;; This time it will take a substitution (set of variable bindings) that it
-;; can pass to `eval`.
+;; Part p1
 
-;; part p4b
-(: stack-verify (-> (List Binding) (List Instr) (List Instr) Boolean))
-(define (stack-verify env p1 p2) ...)
+(: simple-stack-verify (-> (List SimpleInstr) (List SimpleInstr) Boolean))
+(define (simple-stack-verify p1 p2)
+  (equal? (simple-eval (list) p1)
+          (simple-eval (list) p2)))
 
-;; part p4b
+;; Testing
 
-;; part p4c
-(: const-fold (-> (List Instr) (List Instr)))
-(define (const-fold p) ...)
-;; part p4c
+(define prog1
+  (list (make-push 10)
+        (make-push 20)
+        (make-push 2)
+        (make-mul)
+        (make-add)))
 
-;; part p4d
-(: const-fold-prop (-> (List Instr) True))
-(define (const-fold-prop ...) ...)
+(define prog2
+  (list (make-push 10)
+        (make-push 40)
+        (make-add)))
 
-(check-contract const-fold-prop)
+(check-expect (simple-eval (list) prog1) (list 50))
+(check-expect (simple-eval (list) prog2) (list 50))
+(check-expect (simple-stack-verify prog1 prog2) #true)
+(check-expect (simple-eval (list) 
+                           (list (make-push 1)
+                                 (make-push 2)
+                                 (make-add)))
+              (list 3))
 
-;; part p4d
+(check-expect (simple-stack-verify (list (make-push 1)
+                                          (make-push 2)
+                                          (make-add))
+                                  (list (make-push 1)
+                                        (make-push 2)))
+              #false)
+
+;; Problem 2
+(define (drop lst n)
+  (if (zero? n)
+      lst
+      (drop (rest lst) (sub1 n))))
+
+(: simple-const-fold (-> (List SimpleInstr) (List SimpleInstr)))
+(define (simple-const-fold p)
+  (cond
+    [(or (empty? p) (empty? (rest p)) (empty? (rest (rest p))))
+     p]
+    [else
+     (let ([first (first p)]
+           [second (second p)]
+           [third (third p)])
+       (if (and (push? first)
+                (push? second)
+                (add? third))
+           (cons (make-push (+ (push-num second) (push-num first)))
+                 (simple-const-fold (drop p 3)))
+           (cons first (simple-const-fold (rest p)))))]))
 
 
-;; Problem 5
+(check-expect (simple-const-fold (list (make-push 3)
+                                        (make-push 4)
+                                        (make-add)))
+              (list (make-push 7)))
+(check-expect (simple-const-fold (list (make-push 5)
+                                        (make-add)
+                                        (make-push 3)))
+              (list (make-push 5)
+                    (make-add)
+                    (make-push 3)))
+(check-expect (simple-const-fold (list (make-push 3)
+                                        (make-push 4)
+                                        (make-mul)))
+              (list (make-push 3)
+                    (make-push 4)
+                    (make-mul)))
+(check-expect (simple-const-fold (list (make-push 3)
+                                        (make-push 4)
+                                        (make-add)
+                                        (make-push 5)
+                                        (make-push 6)
+                                        (make-add)))
+              (list (make-push 7)
+                    (make-push 11)))
+(check-expect (simple-const-fold (list (make-push 1)
+                                        (make-push 2)
+                                        (make-add)
+                                        (make-push 3)
+                                        (make-add)))
+              (list (make-push 3)
+                    (make-push 3)
+                    (make-add)))
+(check-expect (simple-const-fold (list (make-push 3)
+                                        (make-push 4)))
+              (list (make-push 3)
+                    (make-push 4)))
 
-;; part p5
-(define-struct leaf [value])
-(define-struct node [left right])
-(define-contract (Leaf X) (Struct leaf [X]))
-(define-contract (Node X Y) (Struct node [X Y]))
-(define-contract (Tree X) (OneOf (Leaf X) (Node (Tree X) (Tree X))))
+;; Problem 3
+(: simple-const-fold-prop (-> (List SimpleInstr) True))
+(define (simple-const-fold-prop p)
+  (simple-stack-verify p (simple-const-fold p)))
 
-(define (tree-map f t)
-  (cond [(leaf? t) (make-leaf (f (leaf-value t)))]
-        [(node? t) (make-node (tree-map f (node-left t))
-                              (tree-map f (node-right t)))]))
-;; part p5
-
-
-;; Problem 6
-
-;; part p6
-
-(: p6a (All (X) (-> Boolean X X X)))
-(define (p6a b x1 x2) ...)
-
-(: p6b (All (X) (-> Boolean X X X)))
-(define (p6b b x1 x2) ...)
-
-(: p6c (All (X) (-> Boolean X X X)))
-(define (p6c b x1 x2) ...)
-
-(: p6d (All (X) (-> Boolean X X X)))
-(define (p6d b x1 x2) ...)
-
-;; part p6
-
+(check-contract simple-const-fold-prop)
