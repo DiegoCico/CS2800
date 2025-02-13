@@ -237,7 +237,7 @@
 ;; part p4d
 
 ;; this should check the
-(: const-fold-prop (-> (List Instr) Boolean))
+(: const-fold-prop (-> (List Instr) True))
 (define (const-fold-prop p)
   (equal? (eval '() '() p)
           (eval '() '() (const-fold p))))
