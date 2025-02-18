@@ -68,13 +68,14 @@
 
 
 ;; Problem 2
+(: single-player-exit? (-> (List at?) Boolean))
 (define (single-player-exit? maze)
   (and
    (= (length (filter (lambda (cell-at) (equal? (at-c cell-at) PLAYER))
-                      maze))
+                        maze))
       1)
    (= (length (filter (lambda (cell-at) (equal? (at-c cell-at) EXIT))
-                      maze))
+                        maze))
       1)))
 
 (define (random-maze-2 dimension)
@@ -83,11 +84,14 @@
         maze
         (random-maze-2 dimension))))
 
+(check-contract single-player-exit?)
+
 (check-expect (single-player-exit? (random-maze-2 3)) #t)
 (check-expect (length (random-maze-2 3)) 9)
 
 ;; Problem 3
 
+(: sexp->cell (-> SExp Cell))
 (define (sexp->cell s)
   (cond
     [(eq? s 'X) WALL]
@@ -96,6 +100,7 @@
     [(eq? s 'E) EXIT]
     [else (raise (make-invalid-sexp s))]))
 
+(: cell->sexp (-> Cell SExp))
 (define (cell->sexp cell)
   (cond
     [(eq? cell WALL) 'X]
@@ -103,6 +108,9 @@
     [(eq? cell PLAYER) 'P]
     [(eq? cell EXIT) 'E]
     [else (raise (make-invalid-sexp cell))]))
+
+(check-contract sexp->cell)
+(check-contract cell->sexp)
 
 (check-expect (sexp->cell 'X) WALL)
 (check-expect (sexp->cell '_) EMPTY)
@@ -115,6 +123,11 @@
 (check-expect (cell->sexp EXIT) 'E)
 
 ;; Problem 4
+(: cell-roundtrip-prop (-> Cell Boolean))
+(define (cell-roundtrip-prop cell)
+  (equal? (sexp->cell (cell->sexp cell)) cell))
+
+(check-contract cell-roundtrip-prop)
 
 
 ;; Problem 5
