@@ -91,11 +91,21 @@
 
 ;; Problem 3
 
-(define-contract sexp_options (OneOf 'X
-                            '_
-                            'P
-                            'E))
+(define sexp_DB (list 'X '_ 'P 'E))
 
+(define-contract sexp_options
+  (Immediate
+    (check (lambda (s)
+             (cond
+               [(eq? s 'X) s]
+               [(eq? s '_) s]
+               [(eq? s 'P) s]
+               [(eq? s 'E) s]
+               [else (list-ref sexp_DB (random (length sexp_DB)))])))
+    (generate (lambda (fuel)
+                (list-ref sexp_DB (random (length sexp_DB)))))))
+
+;; should be SExp but causes errors? 
 (: sexp->cell (-> sexp_options Cell))
 (define (sexp->cell s)
   (cond
@@ -104,6 +114,8 @@
     [(eq? s 'P) PLAYER]
     [(eq? s 'E) EXIT]
     [else (raise (make-invalid-sexp s))]))
+
+
 
 (: cell->sexp (-> Cell SExp))
 (define (cell->sexp cell)

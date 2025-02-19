@@ -15,6 +15,22 @@
 (list-ref colors 2)  ;; Output: "green" (third element)
 (list-ref colors 4)  ;; Output: "purple" (fifth element)
 
+;; ------------------------------------------------------
+;; foldl Definition
+;; ------------------------------------------------------
+;; foldl is a recursive function that processes a list from left to right.
+
+(define (join-with-hyphens lst-of-strings)
+  (foldl (lambda (acc str)
+           (if (string-empty? acc)
+               str                            ;; If the accumulator is empty, start with the string.
+               (string-append acc "-" str)))  ;; Otherwise, append "-" and the new string.
+         ""
+         lst-of-strings))
+
+;; Testing join-with-hyphens
+(join-with-hyphens '("Hello" "World" "Again"))  ;; => "Hello-World-Again"
+(join-with-hyphens '())                         ;; => ""
 
 
 ;; ------------------------------
@@ -323,3 +339,54 @@
 (all-even? my-leaf)       ;; => #t  (4 is even)
 (all-even? my-bad-leaf)   ;; => #f  (3 is odd)
 (all-even? my-tree)       ;; => #t  (2 and 6 are even)
+
+;; PRATICE
+
+;; problem 3
+
+;;What's wrong with using `check-contract` here? Describe the problem
+;; and revise the code to fix it.
+
+(define PRICE-DB '(8.75 3.25 2.12))
+(define MENU-DB '("sandwich" "soup" "coffee"))
+
+(: price-of-order (-> (List String) (OneOf False Real)))
+(define (price-of-order order)
+  (cond
+    [(empty? order) 0]
+    [(cons? order)
+     (let ([first-price (price-of-item (first order))])
+       (if (number? first-price)
+           (let ([rest-price (price-of-order (rest order))])
+             (if (number? rest-price)
+                 (+ first-price rest-price)
+                 #f))
+           #f))]))
+
+(: price-of-item (-> String (OneOf False Real)))
+(define (price-of-item item)
+  (foldl (lambda (cur-price cur-item acc)
+           (if (not (false? acc))
+               acc
+               (if (equal? cur-item item)
+                   cur-price
+                   acc)))
+         #f
+         PRICE-DB
+         MENU-DB))
+
+;; TO FIX IT CREATE A MENU ITEM THAT WILL LOOK THROUGH ONLY THE MENU 
+(define-contract MenuItem
+  (Immediate (check string?)
+             (generate (λ (fuel)
+                         (if (< (random) 1/2)
+                             (contract-generate String)
+                             (list-ref MENU-DB (random (length MENU-DB))))))))
+
+
+(: price-of-order-prop (-> (List MenuItem) True))
+(define (price-of-order-prop order)
+  (let ([result (price-of-order order)])
+    (or (false? result) (>= result 0))))
+
+(check-contract price-of-order-prop)
