@@ -91,7 +91,12 @@
 
 ;; Problem 3
 
-(: sexp->cell (-> SExp Cell))
+(define-contract sexp_options (OneOf 'X
+                            '_
+                            'P
+                            'E))
+
+(: sexp->cell (-> sexp_options Cell))
 (define (sexp->cell s)
   (cond
     [(eq? s 'X) WALL]
@@ -124,6 +129,7 @@
 
 ;; Problem 4
 (: cell-roundtrip-prop (-> Cell Boolean))
+
 (define (cell-roundtrip-prop cell)
   (equal? (sexp->cell (cell->sexp cell)) cell))
 
