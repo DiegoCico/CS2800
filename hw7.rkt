@@ -86,6 +86,14 @@
 
 (check-contract single-player-exit?)
 
+(define maze1 (list (make-at 'wall (make-posn 1 1))))
+
+(define maze2 (list (make-at 'wall (make-posn 0 1))
+                    (make-at 'wall (make-posn 1 1))))
+
+;;(check-expect (maze->sexp maze1)
+
+
 (check-expect (single-player-exit? (random-maze-2 3)) #t)
 (check-expect (length (random-maze-2 3)) 9)
 
@@ -105,8 +113,14 @@
     (generate (lambda (fuel)
                 (list-ref sexp_DB (random (length sexp_DB)))))))
 
-;; should be SExp but causes errors? 
-(: sexp->cell (-> sexp_options Cell))
+;; should be SExp but causes errors?
+
+
+(: sexp->cell
+   (Function (arguments (_ SExp))
+             (result Cell)
+             (raises invalid-sexp)))
+
 (define (sexp->cell s)
   (cond
     [(eq? s 'X) WALL]
@@ -126,7 +140,7 @@
     [(eq? cell EXIT) 'E]
     [else (raise (make-invalid-sexp cell))]))
 
-(check-contract sexp->cell)
+(check-contract sexp->cell 4)
 (check-contract cell->sexp)
 
 (check-expect (sexp->cell 'X) WALL)
@@ -150,12 +164,125 @@
 
 ;; Problem 5
 
+;; gets max x in maze
+(define (max-x maze)
+  ;; iterates through eaxhx cell and finds 
+  (apply max (map (lambda (a) (posn-x (at-pos a))) maze)))
+
+;; gets max y in maze
+(define (max-y maze)
+  (apply max (map (lambda (a) (posn-y (at-pos a))) maze)))
+
+;; finds cell at a given index
+(define (find-cell-at maze x y)
+  ;; finds a cell that has matching x and y coords and will retunr it
+  (memf (lambda (cell) (and (= (posn-x (at-pos cell)) x)
+                            (= (posn-y (at-pos cell)) y))) maze))
+
+(: maze->sexp (-> Maze SExp))
+(define (maze->sexp maze)
+  (if (empty? maze)
+      '()
+  (build-list (add1 (max-y maze)) ;; need to account for indexing (first row = 0)
+              (lambda (y)
+                (build-list (add1 (max-x maze))
+                            (lambda (x)
+                              ;; use first since memf returns a list
+                              (if (list? (find-cell-at maze x y)) 
+                                  (cell->sexp (at-c (first (find-cell-at maze x y))))
+                                  '_)))))))
+                              
+
+(check-contract maze->sexp)
+
+;; NOW sexp->maze STUFF
+
+
+;; converts a single  row
+(define (row-converter row x y)
+  (if (empty? row) '()
+      (cons (make-at (sexp->cell (first row)) (make-posn x y))
+            (row-converter (rest row) (add1 x) y))))
+
+;; all row converter
+;; takes in rows and y (only need to track y since only concerned w that value since each row contains x calues)
+(define (every-row-converter rows y)
+  (if (empty? rows) '()
+      (append (row-converter (first rows) 0 y)
+              (every-row-converter (rest rows) (add1 y)))))
+
+(define (valid-sexp? sexp)
+  (and (list? sexp)
+       (andmap list? sexp) 
+       (andmap (lambda (row)
+                 (andmap (lambda (x) (member? x (list 'X '_ 'P 'E))) row)) sexp)))
+
+
+
+(: sexp->maze 
+   (Function (arguments (_ SExp))
+             (result Maze)
+             (raises invalid-sexp)))
+
+(define (sexp->maze sexp)
+  (if (not (list? sexp))
+      (raise (make-invalid-sexp sexp))
+      (if(empty? sexp)
+         '()
+         (if (valid-sexp? sexp)
+         (every-row-converter sexp 0)
+         (raise (make-invalid-sexp sexp))))))
+
+(check-expect (sexp->maze '((X X P)
+  (E X _)
+  (_ _ _))
+) (list
+ (make-at 'wall (make-posn 0 0))
+ (make-at 'wall (make-posn 1 0))
+ (make-at 'player (make-posn 2 0))
+ (make-at 'exit (make-posn 0 1))
+ (make-at 'wall (make-posn 1 1))
+ (make-at 'empty (make-posn 2 1))
+ (make-at 'empty (make-posn 0 2))
+ (make-at 'empty (make-posn 1 2))
+ (make-at 'empty (make-posn 2 2))))
+
+(check-expect (maze->sexp (list
+ (make-at 'wall (make-posn 0 0))
+ (make-at 'wall (make-posn 1 0))
+ (make-at 'player (make-posn 2 0))
+ (make-at 'exit (make-posn 0 1))
+ (make-at 'wall (make-posn 1 1))
+ (make-at 'empty (make-posn 2 1))
+ (make-at 'empty (make-posn 0 2))
+ (make-at 'empty (make-posn 1 2))
+ (make-at 'empty (make-posn 2 2)))) '((X X P)
+  (E X _)
+  (_ _ _)))
+
+
+
+(check-expect (maze->sexp maze1) '((_ _) (_ X)))
+(check-expect (maze->sexp maze2) '((_ _) (X X)))
+
+;;(check-expect (sexp->maze '((_ _) (_ X))) (list (make-at 'wall (make-posn 1 1))))
+
+
+
+
 
 ;; Problem 6
+
+(: maze-roundtrip-prop (-> Maze True))
+
+(define (maze-roundtrip-prop maze)
+  ;; now filters out hte empty spaces (in the case taht they were filled up (ie maze1))
+  (equal? (filter (lambda (cell) (not (eq? (at-c cell) 'empty))) (sexp->maze (maze->sexp maze))) maze))
+
+(check-contract cell-roundtrip-prop)
 
 
 ;; Problem 7
 
 
 ;; Problem 8
-
