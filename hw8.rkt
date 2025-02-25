@@ -48,16 +48,16 @@
 (define-contract VariableClause (OneOf Variable (N Variable)))
 ;; a Variable is either a natural number or a negated one
 
-(define-contract (Formula V) (List V))
+(define-contract (Formula V) (List V)) 
 (define-contract (CNF V) (List (Formula V)))
 
 ;; part p2b
 
-(define (all-literals cnf)
+(define (all-n cnf)
   (cond [(empty? cnf) '()]
-        [else (append (first cnf) (all-literals (rest cnf)))]))
+        [else (append (first cnf) (all-n (rest cnf)))]))
 
-(define (literal->var lit)
+(define (n->var lit)
   (if (number? lit)
       lit
       (n-var lit)))
@@ -66,33 +66,50 @@
 (define (variable-upper-bound cnf)
   (if (empty? cnf)
       0
-      (apply max (map literal->var (all-literals cnf)))))
+      (let ([result (map n->var (all-n cnf))])
+        ;; check again if it is a list of list and it is just
+        ;; empty
+        (if (empty? result)
+            0
+            (apply max result)))))
 
+(test-suite "variable-upper-bound"
+(check-expect (variable-upper-bound (list (list (make-n 4)))) 4)
+(check-expect (variable-upper-bound (list (list))) 0)
 (check-expect (variable-upper-bound '()) 0)
 (check-expect (variable-upper-bound (list (list 3))) 3)
 (check-expect (variable-upper-bound (list (list (make-n 4)))) 4)
 (check-expect (variable-upper-bound (list (list 2 (make-n 3))
                                           (list (make-n 5) 4)
                                           (list 1))) 5)
-
 (check-expect (variable-upper-bound (list (list 2 3)
                                           (list (make-n 3) 2))) 3)
-
+)
 
 ;; Problem 3:
 
 ;; part p3
-(: eval (All (A) (-> (TruthVal A)
-                     (CNF A)
-                     A)))
+
+
+(define (eval-c api c)
+  (if (empty? c)
+      (tv-F api)                      
+      ((tv-OR api) (first c)
+                 (eval-c api (rest c)))))
+
+(: eval (All (A) (-> (TruthVal A) (CNF A) A)))
 (define (eval api cnf)
-  ...)
+  (if (empty? cnf)
+      (tv-T api)                      
+      ((tv-AND api) (eval-c api (first cnf))
+                  (eval api (rest cnf)))))
 
-(test-suite
- "eval"
+(test-suite "eval"
+  (check-expect (eval BOOL-TV '()) #t)
+  (check-expect (eval BOOL-TV (list (list #t #f))) #t)
+  (check-expect (eval BOOL-TV (list (list #t #f) (list #t))) #t)
+  (check-expect (eval BOOL-TV (list (list #t #f) (list #f))) #f)
+  (check-expect (eval BOOL-TV (list (list #t) '())) #f))
 
- (check-expect (eval BOOL-TV ...) ...)
-
- )
 
 ;; part p3

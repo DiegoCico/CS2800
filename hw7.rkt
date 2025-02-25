@@ -183,17 +183,93 @@
 (define (maze->sexp maze)
   (if (empty? maze)
       '()
-  (build-list (add1 (max-y maze)) ;; need to account for indexing (first row = 0)
-              (lambda (y)
-                (build-list (add1 (max-x maze))
-                            (lambda (x)
-                              ;; use first since memf returns a list
-                              (if (list? (find-cell-at maze x y)) 
-                                  (cell->sexp (at-c (first (find-cell-at maze x y))))
-                                  '_)))))))
+      (build-list (add1 (max-y maze))
+                  (lambda (y)
+                    (build-list (add1 (max-x maze))
+                                (lambda (x)
+                                  (if (list? (find-cell-at maze x y))
+                                      (cell->sexp (at-c (first (find-cell-at maze x y))))
+                                      '_)))))))
                               
 
 (check-contract maze->sexp)
+
+(check-expect (maze->sexp '())
+              '())
+
+(define example-maze
+  (list
+    (make-at PLAYER (make-posn 0 0))  
+    (make-at WALL   (make-posn 1 0))
+    (make-at EMPTY  (make-posn 2 0))  
+    (make-at EMPTY  (make-posn 0 1)) 
+    (make-at WALL   (make-posn 1 1))  
+    (make-at EMPTY  (make-posn 2 1))  
+    (make-at WALL   (make-posn 0 2))  
+    (make-at EMPTY  (make-posn 1 2))  
+    (make-at EXIT   (make-posn 2 2)))) 
+
+(check-expect (maze->sexp example-maze)
+              '((P X _)
+                (_ X _)
+                (X _ E)))
+
+(check-expect (maze->sexp example-maze)
+              '((P X _)
+                (_ X _)
+                (X _ E)))
+
+(check-expect (maze->sexp (list (make-at PLAYER (make-posn 1 1))))
+              '(( _ _)
+                (_ P)))
+
+(check-expect (maze->sexp (list (make-at PLAYER (make-posn 0 0))
+                                 (make-at EMPTY (make-posn 1 0))
+                                 (make-at EXIT (make-posn 2 0))))
+              '((P _ E)))
+
+(check-expect (maze->sexp (list (make-at PLAYER (make-posn 0 0))
+                                 (make-at WALL (make-posn 0 1))
+                                 (make-at EXIT (make-posn 0 2))))
+              '((P)
+                (X)
+                (E)))
+
+(check-expect (maze->sexp (list (make-at PLAYER (make-posn 0 0))
+                                 (make-at EXIT (make-posn 2 2))))
+              '((P _ _)
+                (_ _ _)
+                (_ _ E)))
+
+(check-expect (maze->sexp (list (make-at WALL (make-posn 1 1))
+                                 (make-at PLAYER (make-posn 0 0))
+                                 (make-at EXIT (make-posn 2 2))))
+              '((P _ _)
+                (_ X _)
+                (_ _ E)))
+
+(check-expect (maze->sexp (list (make-at PLAYER (make-posn 0 0))
+                                 (make-at WALL (make-posn 2 0))
+                                 (make-at WALL (make-posn 0 1))
+                                 (make-at EXIT (make-posn 0 2))))
+              '((P _ X)
+                (X _ _)
+                (E _ _)))
+
+(define maze-2x3
+  (list (make-at PLAYER (make-posn 0 0))
+        (make-at EMPTY  (make-posn 1 0))
+        (make-at WALL   (make-posn 2 0))
+        (make-at WALL   (make-posn 0 1))
+        (make-at EXIT   (make-posn 1 1))
+        (make-at EMPTY  (make-posn 2 1))))
+
+(check-expect (maze->sexp maze-2x3)
+              '((P _ X)
+                (X E _)))
+
+
+
 
 ;; NOW sexp->maze STUFF
 
@@ -232,6 +308,13 @@
          (if (valid-sexp? sexp)
          (every-row-converter sexp 0)
          (raise (make-invalid-sexp sexp))))))
+
+
+(check-raises (sexp->maze 4))
+(check-raises (sexp->maze "X"))
+(check-contract sexp->maze 2)
+
+
 
 (check-expect (sexp->maze '((X X P)
   (E X _)
@@ -274,15 +357,105 @@
 ;; Problem 6
 
 (: maze-roundtrip-prop (-> Maze True))
-
 (define (maze-roundtrip-prop maze)
   ;; now filters out hte empty spaces (in the case taht they were filled up (ie maze1))
-  (equal? (filter (lambda (cell) (not (eq? (at-c cell) 'empty))) (sexp->maze (maze->sexp maze))) maze))
+  ;;(equal? (filter (lambda (cell) (not (eq? (at-c cell) 'empty))) (sexp->maze (maze->sexp maze))) maze))
+  (equal? (sexp->maze (maze->sexp maze)) maze))
 
 (check-contract cell-roundtrip-prop)
 
 
 ;; Problem 7
 
+(define (find-player maze)
+  (at-pos (first (memf (lambda (cell) (eq? (at-c cell) PLAYER)) maze))))
+
+
+(define (find-exit maze)
+  (at-pos (first (memf (lambda (cell) (eq? (at-c cell) EXIT)) maze))))
+
+
+(define (find-neighbors maze posn)
+  (let ([neighbor-coords (list
+                          (make-posn (- (posn-x posn) 1) (posn-y posn))
+                          (make-posn  (+ (posn-x posn) 1) (posn-y posn))
+                          (make-posn  (posn-x posn) (+ 1 (posn-y posn)))
+                          (make-posn (posn-x posn) (- 1 (posn-y posn))))])
+    (filter (lambda (cell) (find-cell-at maze (posn-x cell) (posn-y cell))) neighbor-coords)))
+                                
+                             
+
+
+(: find-path (-> Maze (List Posn) Posn Boolean))
+
+(define (find-path maze visited curr)
+  (if (member? curr visited) #f
+      (if (equal? curr (find-exit maze))
+          #t
+          (ormap (lambda (neighbor) 
+         (find-path maze (cons curr visited) neighbor))
+       (find-neighbors maze curr)))))
+
+(: path-exists? (-> Maze Boolean)) 
+(define (path-exists? maze)
+  (find-path maze '() (find-player maze)))
+
+(define (random-maze-3 dimension)
+  (let ([curr-maze (random-maze-2 dimension)])
+    (if (path-exists? curr-maze)
+        curr-maze
+        (random-maze-3 dimension))))
+
+
+
+(check-expect (path-exists? (list
+ (make-at 'wall (make-posn 0 0))
+ (make-at 'wall (make-posn 1 0))
+ (make-at 'player (make-posn 2 0))
+ (make-at 'exit (make-posn 0 1))
+ (make-at 'wall (make-posn 1 1))
+ (make-at 'empty (make-posn 2 1))
+ (make-at 'empty (make-posn 0 2))
+ (make-at 'empty (make-posn 1 2))
+ (make-at 'empty (make-posn 2 2)))) #t)
+
 
 ;; Problem 8
+(define (find-length-path maze visited curr)
+  (if (member? curr visited) #f
+      (if (equal? curr (find-exit maze))
+          0
+          (let* ([neighbor-paths
+                  ;; finds the length of hte paths for all nieghbros
+                (map (lambda (neighbor)
+                       (find-length-path maze (cons curr visited) neighbor)) (find-neighbors maze curr))]
+                 [valid-paths (filter number? neighbor-paths)])
+            ;; filters out false valies
+            ;; if empty list then #f othewrise returns min length of hte vaoid paths + 1 
+                 (if (empty? valid-paths) #f (+ 1 (apply min valid-paths)))))))
+
+(: path-length? (-> Maze (Maybe Natural)))
+(define (path-length? maze)
+  (if (empty? maze) #f
+   (find-length-path maze '() (find-player maze))))
+
+(check-contract path-length? 2)
+
+(check-expect (path-length? (list
+ (make-at 'wall (make-posn 0 0))
+ (make-at 'wall (make-posn 1 0))
+ (make-at 'player (make-posn 2 0))
+ (make-at 'exit (make-posn 0 1))
+ (make-at 'wall (make-posn 1 1))
+ (make-at 'empty (make-posn 2 1))
+ (make-at 'empty (make-posn 0 2))
+ (make-at 'empty (make-posn 1 2))
+ (make-at 'empty (make-posn 2 2)))) 3)
+
+
+(define (random-maze-4 dimension)
+  (let ([path (random-maze-3 dimension)])
+    (if (>= (path-length? path) dimension) path (random-maze-4 dimension))))
+    
+        
+  
