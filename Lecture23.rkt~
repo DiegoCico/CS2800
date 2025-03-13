@@ -1,0 +1,13 @@
+#lang lsl
+
+(define-contract GhLast
+  (Oneof (Constant "none")
+         (Constant "g-called")
+         (Constant "h-called")))
+
+(: ghst GhLast)
+(define last-fun "none")
+
+(: g (-> (AllOf Natural (Record update-last last-fun)) Natural))
+(define (g x)
+  (add1 x))

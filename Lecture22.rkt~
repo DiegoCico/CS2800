@@ -1,0 +1,8 @@
+#lang lsl
+
+(define-mutable-struct cell [value])
+(define-contract (Cell X) (Struct cell [X]))
+
+(: f (Function (arguments [a (cell Natural)]
+                          [b (Cell Natural) (not (eq? ab))])
+               (result False)))
