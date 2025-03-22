@@ -1,0 +1,63 @@
+#lang lsl
+
+;; A Path is a list of path elements
+(define-struct path [elts])
+(define-contract Path (Struct path [(List String)]))
+
+;; A File is a path and contents
+(define-struct file [path contents])
+(define-contract File (Struct file [Path String]))
+
+;; Examples to use in tests
+(define FS0 (list (make-file (make-path (list "D" "e")) "yow!")
+                  (make-file (make-path (list "D" "f")) "eek")))
+(define FS1 (list (make-file (make-path (list "A" "b")) "hello there")
+                  (make-file (make-path (list "A" "c")) "goodbye")
+                  (make-file (make-path (list "A" "D" "e")) "yow!")
+                  (make-file (make-path (list "A" "D" "f")) "eek")))
+
+;; Coordinating process' state
+(define-contract CoordState (OneOf Path (List File) False))
+
+;; Part 1
+(: initial-jobs (-> (List String) (List File) (Tuple (List (SendPacket File)) (List File))))
+(define (initial-jobs ps fs)
+  (local [(define (loop ps fs ms)
+            [(or (empty? ps) (empty? fs)) (list ms fs)])])
+  (cond [(or (empty? ps) (empty? fs)) ...]
+
+
+        [else
+         (... (first ps) (first fs) ... (initial-jobs (rest ps) (rest fs))
+              ...)]))
+
+;; Part 2
+(: coord-start (-> (List File) (-> (List String) (Action CoordState))))
+(define (coord-start fs)
+  ...)
+
+;; Part 3
+(: coord-receive (-> CoordState (ReceivePacket (Maybe Path)) (Action CoordState)))
+(define (coord-receive st pkt)
+  ...)
+
+;; Part 4
+(define-contract WorkerState False)
+
+(: worker-start (-> ...))
+(define (worker-start others)
+  ...)
+
+
+;; Part 5
+(: worker-receive (-> ...))
+(define (worker-receive str)
+  ...)
+
+;; Part 6
+(: find-file-with (-> (List File) String (Maybe Path)))
+(define (find-file-with fs str)
+  ...)
+
+(check-expect (find-file-with FS1 "hello") (make-path '("A" "b")))
+(check-expect (find-file-with FS1 "blah") #f)

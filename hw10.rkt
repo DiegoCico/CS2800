@@ -29,12 +29,31 @@
       (action 1 (list (send-packet "b" "hello")))
       (action st '())))
 
+
 (test-suite
  "a-receive"
  (check-expect (a-receive 2 (receive-packet "c" "got it"))
                (action 1 (list (send-packet "b" "hello"))))
  (check-expect (a-receive 2 (receive-packet "b" "got it"))
-               (action 2 '()))) 
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "c" "thanks"))
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "x" "ok"))
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "c" "Got It"))
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "c" "got it "))
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "c" ""))
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "" "got it"))
+               (action 2 '()))
+ (check-expect (a-receive 2 (receive-packet "" ""))
+               (action 2 '()))
+ (check-expect (a-receive 99999 (receive-packet "c" "got it"))
+               (action 1 (list (send-packet "b" "hello"))))
+)
+
 
 ;; part p2
 ;; Problem 3
@@ -100,3 +119,42 @@
  (check-expect (c-receive 4 (receive-packet "b" "hello")) 
                (action 4 '()))) 
 ;; part p6
+
+ (define a-process (process (name "a")
+                    (on-start a-start)
+                    (on-receive a-receive)))
+ (define b-process (process (name "b")
+                    (on-start b-start)
+                    (on-receive b-receive)))
+ (define c-process (process (name "c")
+                    (on-start c-start)
+                    (on-receive c-receive)))
+
+;; part p7 
+
+(define (main) 
+  (start first (list a-process b-process c-process))) 
+
+(define (main-debug)
+  (start-debug first (list a-process b-process c-process)))
+
+
+
+
+;; Problem 9:
+#|
+The chosen PBT library is jqwik. It is used in both Java and Kotlin.
+|#
+
+;; Problem 10:
+#|
+Strengths:
+ - Can capture results that would otherwise take a long time to reproduce (ie a really long list vs testing that it has a pattern).
+ - Since it creates many unqiue examples, it can catch certain edge cases that a human may not have thought of.
+
+Weaknesses:
+ - You aren't capturing that the function returns the desired results, just that it follows the described invariants, but in some cases,
+   it can pass the invariants, but not perform the desired task.
+ - Tests can easily get complicated with invariants that are difficult to capture.
+|#
+
